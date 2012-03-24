@@ -47,3 +47,8 @@ pkg
 
 # For rubinius:
 #*.rbc
+
+rspec
+Gemfile.lock
+.buildpath
+.project
