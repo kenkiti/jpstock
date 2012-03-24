@@ -49,6 +49,5 @@ pkg
 #*.rbc
 
 rspec
-Gemfile.lock
 .buildpath
 .project
