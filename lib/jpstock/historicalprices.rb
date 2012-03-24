@@ -23,6 +23,16 @@ module JpStock
     if options[:code].nil?
       raise HistoricalPricesException, ":codeが指定されてないです"
     end
+    if !options[:code].is_a?(Array)
+      options[:code] = [options[:code]]
+    end
+    options[:code].map!{|code| code.to_s} # 文字列に変換
+    options[:code].uniq!
+    options[:code].each do |code|
+      if (/^\d{4}$/ =~ code).nil?
+        raise HistoricalPricesException, "指定された:codeの一部が不正です"
+      end
+    end
     if options[:all].nil? or (options[:all] != true and options[:all] != false)
       options[:all] = false
     end
@@ -43,7 +53,7 @@ module JpStock
       raise HistoricalPricesException, ":range_typeがおかしいです"
     end
 
-    code = options[:code]
+    codes = options[:code]
     start_date = options[:start_date]
     end_date = options[:end_date]
     range_type = options[:range_type]
@@ -55,27 +65,30 @@ module JpStock
     emon = end_date.month
     eday = end_date.day
     
-    results = []
-    500.times {|page|
-      page *= 50 # 50ずつ増えてく
-      site_url = "http://table.yahoo.co.jp/t?c=#{syear}&a=#{smon}&b=#{sday}&f=#{eyear}&d=#{emon}&e=#{eday}&g=#{range_type}&s=#{code}&y=#{page}&z=#{code}.t&x=.csv"
-      html = open(site_url, "r:euc-jp").read.encode('utf-8', :invalid => :replace, :undef => :replace)
-      doc = Nokogiri::HTML(html)
-      trs = doc.xpath('//tr[@align="right" and @bgcolor="#ffffff"]')
-      if trs.empty?
-        break
-      end
-      
-      data_field_num = 7
-      trs.each do |tr|
-        tds = tr.xpath('.//td')
-        if tds.length == data_field_num
-          row = tds.map{|td| td.text.strip}
-          results.push(PriceData.new(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+    results = {}
+    codes.each do |code|
+      results[code] = []
+      500.times do |page|
+        page *= 50 # 50ずつ増えてく
+        site_url = "http://table.yahoo.co.jp/t?c=#{syear}&a=#{smon}&b=#{sday}&f=#{eyear}&d=#{emon}&e=#{eday}&g=#{range_type}&s=#{code}&y=#{page}&z=#{code}.t&x=.csv"
+        html = open(site_url, "r:euc-jp").read.encode('utf-8', :invalid => :replace, :undef => :replace)
+        doc = Nokogiri::HTML(html)
+        trs = doc.xpath('//tr[@align="right" and @bgcolor="#ffffff"]')
+        if trs.empty?
+          break
         end
+        
+        data_field_num = 7
+        trs.each do |tr|
+          tds = tr.xpath('.//td')
+          if tds.length == data_field_num
+            row = tds.map{|td| td.text.strip}
+            results[code].push(PriceData.new(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+          end
+        end
+        sleep(0.5)
       end
-      sleep(0.5)
-    }
+    end
     return results
   end
   

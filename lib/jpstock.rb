@@ -8,7 +8,3 @@ require 'jpstock/price'
 require 'jpstock/historicalprices'
 require 'jpstock/brand'
 require 'jpstock/finance'
-
-#p JpStock.price(:code=>"3632")
-#p JpStock.brand(:category => ['0050', 'abc', '1050'])
-

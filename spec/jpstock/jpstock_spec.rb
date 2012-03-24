@@ -8,7 +8,10 @@ describe "株価を取得する場合" do
   end
 
   it "証券コードがおかしかったら例外を投げるべき" do
+    lambda{ JpStock.price(:code=>"3") }.should raise_error(JpStock::PriceException)
+    lambda{ JpStock.price(:code=>"abcd") }.should raise_error(JpStock::PriceException)
     lambda{ JpStock.price(:code=>"123456") }.should raise_error(JpStock::PriceException)
+    lambda{ JpStock.price(:code=>["1", "a"]) }.should raise_error(JpStock::PriceException)
   end
   
 end
@@ -17,6 +20,13 @@ describe "過去の株価を取得する場合" do
   
   it "オプションがnilだったら例外を投げるべき" do
     lambda{ JpStock.historical_prices(nil) }.should raise_error(JpStock::HistoricalPricesException)
+  end
+
+  it "証券コードがおかしかったら例外を投げるべき" do
+    lambda{ JpStock.historical_prices(:code=>"3", :all=>true) }.should raise_error(JpStock::HistoricalPricesException)
+    lambda{ JpStock.historical_prices(:code=>"abcd", :all=>true) }.should raise_error(JpStock::HistoricalPricesException)
+    lambda{ JpStock.historical_prices(:code=>"123456", :all=>true) }.should raise_error(JpStock::HistoricalPricesException)
+    lambda{ JpStock.historical_prices(:code=>["1", "a"], :all=>true) }.should raise_error(JpStock::HistoricalPricesException)
   end
 
   it "allか日付が指定されていなかったら例外を投げるべき" do
@@ -46,6 +56,12 @@ describe "財務情報を取得する場合" do
   
   it "オプションがnilだったら例外を投げるべき" do
     lambda{ JpStock.finance(nil) }.should raise_error(JpStock::FinanceException)
+  end
+
+  it "証券コードがおかしかったら例外を投げるべき" do
+    lambda{ JpStock.finance(:code=>nil) }.should raise_error(JpStock::FinanceException)
+    lambda{ JpStock.finance(:code=>3) }.should raise_error(JpStock::FinanceException)
+    lambda{ JpStock.finance(:code=>"abcd") }.should raise_error(JpStock::FinanceException)
   end
 
 end

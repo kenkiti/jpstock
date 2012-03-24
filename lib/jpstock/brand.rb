@@ -98,6 +98,7 @@ module JpStock
            ]
           results[category].push(BrandData.new(row[0], row[1], row[2], row[3]))
         end
+        sleep(0.5)
       end
     end
     return results
