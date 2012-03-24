@@ -17,8 +17,8 @@ Jeweler::Tasks.new do |gem|
   gem.name = "jpstock"
   gem.homepage = "http://github.com/utahta/jpstock"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = %Q{JpStock is a Ruby library for extracting information about Japan stocks}
+  gem.description = %Q{JpStock is a Ruby library for extracting information about Japan stocks}
   gem.email = "labs.ninxit@gmail.com"
   gem.authors = ["utahta"]
   # dependencies defined in Gemfile
