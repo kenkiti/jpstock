@@ -33,6 +33,11 @@ describe "過去の株価を取得する場合" do
     lambda{ JpStock.historical_prices(:code=>"4689") }.should raise_error(JpStock::HistoricalPricesException)
   end
   
+  it "日付の指定がおかしかったら例外を投げるべき" do
+    lambda{ JpStock.historical_prices(:code=>"4689", :start_date=>'2012/3', :end_date=>'2012/3/31') }.should raise_error(JpStock::HistoricalPricesException)
+    lambda{ JpStock.historical_prices(:code=>"4689", :start_date=>'2012/3/1', :end_date=>'2012/3') }.should raise_error(JpStock::HistoricalPricesException)
+  end
+  
   it "指定されたレンジタイプがおかしかったら例外を投げるべき" do
     lambda{ JpStock.historical_prices(:code=>"4689", :all=>true, :range_type=>"abc") }.should raise_error(JpStock::HistoricalPricesException)
   end

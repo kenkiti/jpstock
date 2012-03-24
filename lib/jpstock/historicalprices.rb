@@ -43,8 +43,19 @@ module JpStock
       options[:start_date] = Date.new(1900, 1, 1)
       options[:end_date] = Date.today
     end
-    if !options[:start_date].is_a?(Date) or !options[:end_date].is_a?(Date)
-      raise HistoricalPricesException, ":start_dateか:end_dateの型がDateじゃないです"
+    if !options[:start_date].is_a?(Date)
+      begin
+        options[:start_date] = Date.strptime(options[:start_date], '%Y/%m/%d')
+      rescue
+        raise HistoricalPricesException, ":start_dateはDate型かyyyy/mm/ddフォーマットの文字列じゃないとだめです"
+      end
+    end
+    if !options[:end_date].is_a?(Date)
+      begin
+        options[:end_date] = Date.strptime(options[:end_date], '%Y/%m/%d')
+      rescue
+        raise HistoricalPricesException, ":end_dateはDate型かyyyy/mm/ddフォーマットの文字列じゃないとだめです"
+      end
     end
     if options[:range_type].nil?
       options[:range_type] = HistoricalRange::DAILY
