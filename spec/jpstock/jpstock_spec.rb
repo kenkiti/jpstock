@@ -57,16 +57,16 @@ describe "銘柄情報を取得する場合" do
   
 end
 
-describe "財務情報を取得する場合" do
+describe "個別銘柄情報を取得する場合" do
   
   it "オプションがnilだったら例外を投げるべき" do
-    lambda{ JpStock.finance(nil) }.should raise_error(JpStock::FinanceException)
+    lambda{ JpStock.quote(nil) }.should raise_error(JpStock::QuoteException)
   end
 
   it "証券コードがおかしかったら例外を投げるべき" do
-    lambda{ JpStock.finance(:code=>nil) }.should raise_error(JpStock::FinanceException)
-    lambda{ JpStock.finance(:code=>3) }.should raise_error(JpStock::FinanceException)
-    lambda{ JpStock.finance(:code=>"abcd") }.should raise_error(JpStock::FinanceException)
+    lambda{ JpStock.quote(:code=>nil) }.should raise_error(JpStock::QuoteException)
+    lambda{ JpStock.quote(:code=>3) }.should raise_error(JpStock::QuoteException)
+    lambda{ JpStock.quote(:code=>"abcd") }.should raise_error(JpStock::QuoteException)
   end
 
 end

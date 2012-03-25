@@ -14,13 +14,12 @@ module JpStock
       @low = to_int(low)
       @close = to_int(close)
       @volume = to_int(volume)
-      @adj_close = to_int(adj_close)
-      adjust()
+      adjust(to_int(adj_close))
     end
     
     private 
-    def adjust()
-      rate = @close / @adj_close
+    def adjust(adj_close)
+      rate = @close / adj_close
       if rate > 1
           @open /= rate
           @high /= rate

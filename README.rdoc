@@ -25,8 +25,8 @@ dependencies: nokogiri
  JpStock.brand(:category=>"0050")
  JpStock.brand(:all=>true)
 
-財務情報を取得
- JpStock.finance(:code=>"4689")
+個別銘柄情報を取得
+ JpStock.quote(:code=>"4689")
 
 == Copyright
 
