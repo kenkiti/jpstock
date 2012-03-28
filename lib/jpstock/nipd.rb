@@ -17,6 +17,10 @@ module JpStock
     end
   end
   
+  # 逆日歩情報を取得
+  # :code 証券コード
+  # :date 日付
+  # :reload データ再取得(true or false)
   def nipd(options)
     if options.nil? or !options.is_a?(Hash)
       raise NipdException, "オプションがnil、もしくはハッシュじゃないです"
@@ -44,6 +48,11 @@ module JpStock
         raise NipdException, ":dateはDate型かyyyy/mm/ddフォーマットの文字列じゃないとだめです"
       end
     end
+    if options[:reload] != true
+      options[:reload] = false
+    end
+        
+    # 証券コード
     codes = options[:code]
     
     # 取得日時
@@ -51,9 +60,12 @@ module JpStock
     month = "%02d" % options[:date].month
     day = "%02d" % options[:date].day
     
+    # 再取得
+    reload = options[:reload]
+    
     # 日証金から品貸料データを取得
     jsf_file = Dir.tmpdir + "/jsf#{year}#{month}#{day}.csv"
-    if !File.exist?(jsf_file)
+    if !File.exist?(jsf_file) or reload
       begin
         url = "http://www.jsf.co.jp/de/stock/dlcsv.php?target=pcsl&date=#{year}-#{month}-#{day}"
         open(url) do |doc|
@@ -62,13 +74,13 @@ module JpStock
           end
         end
       rescue
-        raise NipdException, "日証金データを取得できませんでした (#{url})"
+        print "日証金データが見つからないです (#{url})\n"
       end
     end
     
     # 大証金から品貸料データを取得
     tsf_file = Dir.tmpdir + "/tsf#{year}#{month}#{day}.csv"
-    if !File.exist?(tsf_file)
+    if !File.exist?(tsf_file) or reload
       begin
         url = "http://www.osf.co.jp/debt-credit/pdf/ma715500#{year}#{month}#{day}.csv"
         open(url) do |doc|
@@ -77,30 +89,34 @@ module JpStock
           end
         end
       rescue
-        raise NipdException, "大証金データを取得できませんでした (#{url})"
+        print "大証金データが見つからないです (#{url})\n"
       end
     end
     
     data = {}
-    CSV.open(jsf_file, 'rb') do |csv|
-      5.times do |i|
-        csv.shift
-      end
-      csv.each do |row|
-        row = row.map{|r| r.strip if r.is_a?(String) }
-        code = row[2]
-        data[code] = NipdData.new(code, row[3], row[8], row[9])
+    if File.exist?(jsf_file)
+      CSV.open(jsf_file, 'rb') do |csv|
+        5.times do |i|
+          csv.shift
+        end
+        csv.each do |row|
+          row = row.map{|r| r.strip if r.is_a?(String) }
+          code = row[2]
+          data[code] = NipdData.new(code, row[3], row[8], row[9])
+        end
       end
     end
-
-    CSV.open(tsf_file, 'rb') do |csv|
-      3.times do |i|
-        csv.shift
-      end
-      csv.each do |row|
-        row = row.map{|r| r.strip if r.is_a?(String) }
-        code = row[2]
-        data[code] = NipdData.new(code, row[3], row[6], row[5])
+    
+    if File.exist?(tsf_file)
+      CSV.open(tsf_file, 'rb') do |csv|
+        3.times do |i|
+          csv.shift
+        end
+        csv.each do |row|
+          row = row.map{|r| r.strip if r.is_a?(String) }
+          code = row[2]
+          data[code] = NipdData.new(code, row[3], row[6], row[5])
+        end
       end
     end
     

@@ -28,6 +28,11 @@ dependencies: nokogiri
 個別銘柄情報を取得
  JpStock.quote(:code=>"4689")
 
+逆日歩情報を取得
+ JpStock.nipd(:code=>"4689")
+ JpStock.nipd(:code=>"4689", :date=>'2012/3/20')
+ JpStock.nipd(:code=>"4689", :date=>'2012/3/20', :reload=>true)
+
 == Copyright
 
 Copyright (c) 2012 utahta. See LICENSE.txt for
