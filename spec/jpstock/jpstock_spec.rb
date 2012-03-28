@@ -70,3 +70,22 @@ describe "個別銘柄情報を取得する場合" do
   end
 
 end
+
+describe "逆日歩を取得する場合" do
+  
+  it "オプションがnilだったら例外を投げるべき" do
+    lambda{ JpStock.nipd(nil) }.should raise_error(JpStock::NipdException)
+  end
+
+  it "証券コードがおかしかったら例外を投げるべき" do
+    lambda{ JpStock.nipd(:code=>nil) }.should raise_error(JpStock::NipdException)
+    lambda{ JpStock.nipd(:code=>3) }.should raise_error(JpStock::NipdException)
+    lambda{ JpStock.nipd(:code=>"abcd") }.should raise_error(JpStock::NipdException)
+  end
+
+  it "日付の指定がおかしかったら例外を投げるべき" do
+    lambda{ JpStock.nipd(:code=>"4689", :date=>'2012/3') }.should raise_error(JpStock::NipdException)
+  end
+
+end
+
