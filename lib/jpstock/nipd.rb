@@ -21,21 +21,22 @@ module JpStock
   # :code 証券コード
   # :date 日付
   # :reload データ再取得(true or false)
-  def nipd(options)
+  def nipd(options=nil)
     if options.nil? or !options.is_a?(Hash)
-      raise NipdException, "オプションがnil、もしくはハッシュじゃないです"
+      options = {:all => true}
     end
     if options[:code].nil?
-      raise NipdException, ":codeが指定されてないです"
-    end
-    if !options[:code].is_a?(Array)
-      options[:code] = [options[:code]]
-    end
-    options[:code].map!{|code| code.to_s} # 文字列に変換
-    options[:code].uniq!
-    options[:code].each do |code|
-      if (/^\d{4}$/ =~ code).nil?
-        raise NipdException, "指定された:codeの一部が不正です"
+      options[:all] = true
+    else
+      if !options[:code].is_a?(Array)
+        options[:code] = [options[:code]]
+      end
+      options[:code].map!{|code| code.to_s} # 文字列に変換
+      options[:code].uniq!
+      options[:code].each do |code|
+        if (/^\d{4}$/ =~ code).nil?
+          raise NipdException, "指定された:codeの一部が不正です"
+        end
       end
     end
     if options[:date].nil?
@@ -55,6 +56,9 @@ module JpStock
     # 証券コード
     codes = options[:code]
     
+    # 全取得
+    all = options[:all] == true
+      
     # 取得日時
     year = options[:date].year
     month = "%02d" % options[:date].month
@@ -69,7 +73,7 @@ module JpStock
       begin
         url = "http://www.jsf.co.jp/de/stock/dlcsv.php?target=pcsl&date=#{year}-#{month}-#{day}"
         open(url) do |doc|
-          open(jsf_file, 'wb') do |fp|
+          open(jsf_file, 'w') do |fp|
             fp.print doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
           end
         end
@@ -84,7 +88,7 @@ module JpStock
       begin
         url = "http://www.osf.co.jp/debt-credit/pdf/ma715500#{year}#{month}#{day}.csv"
         open(url) do |doc|
-          open(tsf_file, 'wb') do |fp|
+          open(tsf_file, 'w') do |fp|
             fp.print doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
           end
         end
@@ -95,12 +99,13 @@ module JpStock
     
     data = {}
     if File.exist?(jsf_file)
-      CSV.open(jsf_file, 'rb') do |csv|
+      CSV.open(jsf_file, 'r') do |csv|
         5.times do |i|
           csv.shift
         end
         csv.each do |row|
-          row = row.map{|r| r.strip if r.is_a?(String) }
+          row = row.map{|r| r.gsub(/(^(\s|　)+)|((\s|　)+$)/, '') if r.is_a?(String)} # 全角スペース対応
+          next if row[8] == "*****" # 満額だったら飛ばす
           code = row[2]
           data[code] = NipdData.new(code, row[3], row[8], row[9])
         end
@@ -108,12 +113,12 @@ module JpStock
     end
     
     if File.exist?(tsf_file)
-      CSV.open(tsf_file, 'rb') do |csv|
+      CSV.open(tsf_file, 'r') do |csv|
         3.times do |i|
           csv.shift
         end
         csv.each do |row|
-          row = row.map{|r| r.strip if r.is_a?(String) }
+          row = row.map{|r| r.gsub(/(^(\s|　)+)|((\s|　)+$)/, '') if r.is_a?(String)}
           code = row[2]
           data[code] = NipdData.new(code, row[3], row[6], row[5])
         end
@@ -121,8 +126,12 @@ module JpStock
     end
     
     results = {}
-    codes.each do |code|
-      results[code] = data[code]
+    if all
+      results = data
+    else
+      codes.each do |code|
+        results[code] = data[code]
+      end
     end
     return results
   end
