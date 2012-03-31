@@ -21,10 +21,14 @@ module JpStock
   # :code 証券コード
   # :date 日付
   # :reload データ再取得(true or false)
-  def nipd(options=nil)
+  # :jsf 日証金取得ふらぐ(true or false)
+  # :tsf 大証金取得ふらぐ(true or false)
+  def nipd(options={:all=>true, :jsf=>true, :tsf=>true})
     if options.nil? or !options.is_a?(Hash)
-      options = {:all => true}
+      raise NipdException, "オプションがnil、もしくはハッシュじゃないです"
     end
+    options[:jsf] = true if options[:jsf].nil?
+    options[:tsf] = true if options[:tsf].nil?
     if options[:code].nil?
       options[:all] = true
     else
@@ -40,7 +44,12 @@ module JpStock
       end
     end
     if options[:date].nil?
-      options[:date] = Date.today - 1 # 1日前のデータ
+      # 前営業日のデータを取得する（ただし祝日は考慮してない）
+      d = Date.today
+      options[:date] = d - 1 if 2 <= d.wday and d.wday <= 5 # 火-金
+      options[:date] = d - 2 if d.wday == 6 # 土
+      options[:date] = d - 3 if d.wday == 0 # 日
+      options[:date] = d - 3 if d.wday == 1 # 月
     end
     if !options[:date].is_a?(Date)
       begin
@@ -52,7 +61,7 @@ module JpStock
     if options[:reload] != true
       options[:reload] = false
     end
-        
+    
     # 証券コード
     codes = options[:code]
     
@@ -66,68 +75,74 @@ module JpStock
     
     # 再取得
     reload = options[:reload]
-    
-    # 日証金から品貸料データを取得
-    jsf_file = Dir.tmpdir + "/jsf#{year}#{month}#{day}.csv"
-    if !File.exist?(jsf_file) or reload
-      begin
-        url = "http://www.jsf.co.jp/de/stock/dlcsv.php?target=pcsl&date=#{year}-#{month}-#{day}"
-        open(url) do |doc|
-          open(jsf_file, 'w') do |fp|
-            fp.print doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
-          end
-        end
-      rescue
-        print "日証金データが見つからないです (#{url})\n"
-      end
-    end
-    
-    # 大証金から品貸料データを取得
-    tsf_file = Dir.tmpdir + "/tsf#{year}#{month}#{day}.csv"
-    if !File.exist?(tsf_file) or reload
-      begin
-        url = "http://www.osf.co.jp/debt-credit/pdf/ma715500#{year}#{month}#{day}.csv"
-        open(url) do |doc|
-          open(tsf_file, 'w') do |fp|
-            fp.print doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
-          end
-        end
-      rescue
-        print "大証金データが見つからないです (#{url})\n"
-      end
-    end
-    
+      
     data = {}
-    if File.exist?(jsf_file)
-      CSV.open(jsf_file, 'r') do |csv|
-        5.times do |i|
-          csv.shift
+    # 日証金から品貸料データを取得
+    if options[:jsf]
+      jsf_file = Dir.tmpdir + "/jsf#{year}#{month}#{day}.csv"
+      if !File.exist?(jsf_file) or reload
+        begin
+          url = "http://www.jsf.co.jp/de/stock/dlcsv.php?target=pcsl&date=#{year}-#{month}-#{day}"
+          open(url) do |doc|
+            doc = doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
+            raise if /指定された日付の品貸料率一覧表はありません/ =~ doc
+            open(jsf_file, 'w') do |fp|
+              fp.print doc
+            end
+          end
+        rescue
+          print "日証金データが見つからないです (#{url})\n"
         end
-        csv.each do |row|
-          row = row.map{|r| r.gsub(/(^(\s|　)+)|((\s|　)+$)/, '') if r.is_a?(String)} # 全角スペース対応
-          next if row[8] == "*****" # 満額だったら飛ばす
-          code = row[2]
-          data[code] = NipdData.new(code, row[3], row[8], row[9])
+      end
+      
+      if File.exist?(jsf_file)
+        CSV.open(jsf_file, 'r') do |csv|
+          5.times do |i|
+            csv.shift
+          end
+          csv.each do |row|
+            row = row.map{|r| r.gsub(/(^(\s|　)+)|((\s|　)+$)/, '') if r.is_a?(String)} # 全角スペース対応
+            next if row[8] == "*****" # 満額だったら飛ばす
+            code = row[2]
+            data[code] = NipdData.new(code, row[3], row[8], row[9])
+          end
+        end
+      end
+    end
+      
+    # 大証金から品貸料データを取得
+    if options[:tsf]
+      tsf_file = Dir.tmpdir + "/tsf#{year}#{month}#{day}.csv"
+      if !File.exist?(tsf_file) or reload
+        begin
+          url = "http://www.osf.co.jp/debt-credit/pdf/ma715500#{year}#{month}#{day}.csv"
+          open(url) do |doc|
+            open(tsf_file, 'w') do |fp|
+              fp.print doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
+            end
+          end
+        rescue
+          print "大証金データが見つからないです (#{url})\n"
+        end
+      end
+      
+      if File.exist?(tsf_file)
+        CSV.open(tsf_file, 'r') do |csv|
+          3.times do |i|
+            csv.shift
+          end
+          csv.each do |row|
+            row = row.map{|r| r.gsub(/(^(\s|　)+)|((\s|　)+$)/, '') if r.is_a?(String)}
+            code = row[2]
+            data[code] = NipdData.new(code, row[3], row[6], row[5])
+          end
         end
       end
     end
     
-    if File.exist?(tsf_file)
-      CSV.open(tsf_file, 'r') do |csv|
-        3.times do |i|
-          csv.shift
-        end
-        csv.each do |row|
-          row = row.map{|r| r.gsub(/(^(\s|　)+)|((\s|　)+$)/, '') if r.is_a?(String)}
-          code = row[2]
-          data[code] = NipdData.new(code, row[3], row[6], row[5])
-        end
-      end
-    end
-    
-    results = {}
+    results = {:date=>options[:date]}
     if all
-      results = data
+      results.update(data)
     else
       codes.each do |code|
         results[code] = data[code]
@@ -135,6 +150,6 @@ module JpStock
     end
     return results
   end
-  
+    
   module_function :nipd
 end

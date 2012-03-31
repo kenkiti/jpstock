@@ -33,6 +33,7 @@ dependencies: nokogiri
  JpStock.nipd(:code=>"4689")
  JpStock.nipd(:code=>"4689", :date=>'2012/3/20')
  JpStock.nipd(:code=>"4689", :date=>'2012/3/20', :reload=>true)
+ JpStock.nipd(:code=>"4689", :date=>'2012/3/20', :jsf=>true, :tsf=>false)
 
 == Copyright
 
