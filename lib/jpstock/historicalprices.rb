@@ -82,7 +82,7 @@ module JpStock
       500.times do |page|
         page *= 50 # 50ずつ増えてく
         site_url = "http://table.yahoo.co.jp/t?c=#{syear}&a=#{smon}&b=#{sday}&f=#{eyear}&d=#{emon}&e=#{eday}&g=#{range_type}&s=#{code}&y=#{page}&z=#{code}.t&x=.csv"
-        html = open(site_url, "r:euc-jp").read.encode('utf-8', :invalid => :replace, :undef => :replace)
+        html = open(site_url, "r:binary").read.encode('utf-8', 'euc-jp', :invalid => :replace, :undef => :replace)
         doc = Nokogiri::HTML(html)
         trs = doc.xpath('//tr[@align="right" and @bgcolor="#ffffff"]')
         if trs.empty?

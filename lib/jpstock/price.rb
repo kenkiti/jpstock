@@ -28,7 +28,7 @@ module JpStock
     results = {} # 証券コードをキーにしたハッシュを返す
     codes.each do |code|
       site_url = "http://quote.yahoo.co.jp/q?s=#{code}&d=v2&esearch=1"
-      html = open(site_url, "r:euc-jp").read.encode('utf-8', :invalid => :replace, :undef => :replace)
+      html = open(site_url, "r:binary").read.encode('utf-8', 'euc-jp', :invalid => :replace, :undef => :replace)
       doc = Nokogiri::HTML(html)
       trs = doc.xpath('//tr[@align="right"]')
       
