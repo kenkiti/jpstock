@@ -140,12 +140,12 @@ module JpStock
       end
     end
     
-    results = {:date=>options[:date]}
+    results = {:date=>options[:date], :result=>{}}
     if all
-      results.update(data)
+      results[:result] = data
     else
       codes.each do |code|
-        results[code] = data[code]
+        results[:result][code] = data[code]
       end
     end
     return results
