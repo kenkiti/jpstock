@@ -88,3 +88,19 @@ describe "逆日歩を取得する場合" do
 
 end
 
+describe "適時開示を取得する場合" do
+
+  it "オプションがnilだったら例外を投げるべき" do
+    lambda{ JpStock.tdnet(nil) }.should raise_error(JpStock::TdnetException)
+  end
+  
+  it "証券コードがおかしかったら例外を投げるべき" do
+    lambda{ JpStock.tdnet(:code=>3) }.should raise_error(JpStock::TdnetException)
+    lambda{ JpStock.tdnet(:code=>"abcd") }.should raise_error(JpStock::TdnetException)
+  end
+
+  it "日付の指定がおかしかったら例外を投げるべき" do
+    lambda{ JpStock.tdnet(:code=>"4689", :date=>'2012/3') }.should raise_error(JpStock::TdnetException)
+  end
+
+end
