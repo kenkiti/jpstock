@@ -83,7 +83,7 @@ module JpStock
       if !File.exist?(jsf_file) or reload
         begin
           url = "http://www.jsf.co.jp/de/stock/dlcsv.php?target=pcsl&date=#{year}-#{month}-#{day}"
-          open(url) do |doc|
+          open(url, "r:binary") do |doc|
             doc = doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
             raise if /指定された日付の品貸料率一覧表はありません/ =~ doc
             open(jsf_file, 'w') do |fp|
@@ -116,7 +116,7 @@ module JpStock
       if !File.exist?(tsf_file) or reload
         begin
           url = "http://www.osf.co.jp/debt-credit/pdf/ma715500#{year}#{month}#{day}.csv"
-          open(url) do |doc|
+          open(url, "r:binary") do |doc|
             open(tsf_file, 'w') do |fp|
               fp.print doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
             end
