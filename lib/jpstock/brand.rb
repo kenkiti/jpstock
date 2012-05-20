@@ -56,7 +56,7 @@ module JpStock
       raise BrandException, "オプションがnil、もしくはハッシュじゃないです"
     end
     if options[:all]
-      categories = Brand::CATEGORIES
+      categories = Brand::CATEGORIES.keys
     else
       if options[:category].nil?
         raise BrandException, "カテゴリが指定されてません"
