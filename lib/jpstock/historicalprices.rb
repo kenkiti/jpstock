@@ -94,7 +94,10 @@ module JpStock
           tds = tr.xpath('.//td')
           if tds.length == data_field_num
             row = tds.map{|td| td.text.strip}
-            results[code].push(PriceData.new(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+            begin
+              results[code].push(PriceData.new(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+            rescue
+            end
           end
         end
         sleep(0.5)
