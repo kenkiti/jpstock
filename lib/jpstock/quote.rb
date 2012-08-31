@@ -5,11 +5,11 @@ module JpStock
   end
   
   class QuoteData
-    attr_accessor :company_name, :close, :prev_close, :open, :high, :low,
+    attr_accessor :company_name, :close, :prev_close, :open, :high, :low, :volume,
       :market_cap, :shares_issued, :dividend_yield, :dividend_one, 
       :per, :pbr, :eps, :bps, :price_min, :round_lot, :years_high, :years_low
     
-    def initialize(company_name, close, prev_close, open, high, low,
+    def initialize(company_name, close, prev_close, open, high, low, volume,
                   market_cap, shares_issued, dividend_yield, dividend_one, 
                   per, pbr, eps, bps, price_min, round_lot, years_high, years_low)
       @company_name = company_name # 会社名
@@ -18,6 +18,7 @@ module JpStock
       @open = to_int(open) # 始値
       @high = to_int(high) # 高値
       @low = to_int(low) # 安値
+      @volume = to_int(volume) # 出来高
       @market_cap = to_int(market_cap) # 時価総額
       @shares_issued = to_int(shares_issued) # 発行済株式数
       @dividend_yield = to_float(dividend_yield) # 配当利回り
@@ -80,16 +81,17 @@ module JpStock
       doc = Nokogiri::HTML(html)
       
       # 企業名抽出
-      elm = doc.xpath('//strong[@class="yjL"]')
+      elm = doc.xpath('//table[@class="stocksTable"]/tr/th[@class="symbol"]/h1')
       company_name = elm.text.strip.gsub(/【.*】/,'')
       
       # 株価抽出
-      close = doc.xpath('//span[@class="yjFL"]').text.strip
+      close = doc.xpath('//table[@class="stocksTable"]/tr/td')[1].text.strip
       elms = doc.xpath('//div[@class="innerDate"]/div/dl/dd[@class="ymuiEditLink mar0"]/strong')
       prev_close = elms[0].text.strip
       open = elms[1].text.strip
       high = elms[2].text.strip
       low = elms[3].text.strip
+      volume = elms[4].text.strip
       
       # 財務データ抽出
       elms = doc.xpath('//div[@class="chartFinance"]')
@@ -98,7 +100,7 @@ module JpStock
       data_field_num = 12
       if elms.length == data_field_num
         row = elms.map{|elm| elm.xpath('.//dd/strong').text }
-        results[code] = QuoteData.new(company_name, close, prev_close, open, high, low,
+        results[code] = QuoteData.new(company_name, close, prev_close, open, high, low, volume,
                                         row[0], row[1], row[2], row[3], row[4], row[5],
                                         row[6], row[7], row[8], row[9], row[10], row[11])
       end

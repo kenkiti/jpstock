@@ -27,20 +27,20 @@ module JpStock
     
     results = {} # 証券コードをキーにしたハッシュを返す
     codes.each do |code|
-      site_url = "http://quote.yahoo.co.jp/q?s=#{code}&d=v2&esearch=1"
-      html = open(site_url, "r:binary").read.encode('utf-8', 'euc-jp', :invalid => :replace, :undef => :replace)
+      site_url = "http://stocks.finance.yahoo.co.jp/stocks/detail/?code=#{code}"
+      html = open(site_url).read
       doc = Nokogiri::HTML(html)
-      trs = doc.xpath('//tr[@align="right"]')
+
+      # 株価抽出
+      close = doc.xpath('//table[@class="stocksTable"]/tr/td')[1].text.strip
+      elms = doc.xpath('//div[@class="innerDate"]/div/dl/dd[@class="ymuiEditLink mar0"]/strong')
+      prev_close = elms[0].text.strip
+      open = elms[1].text.strip
+      high = elms[2].text.strip
+      low = elms[3].text.strip
+      volume = elms[4].text.strip
+      results[code] = PriceData.new(Date.today(), open, high, low, close, volume, close)
       
-      data_field_num = 11 # 取得した要素数がこの値だったらOKとする
-      trs.each do |tr|
-        tds = tr.xpath('.//td')
-        if tds.length == data_field_num
-          tds = tds.slice(3, 10) # 不必要な要素を削除
-          row = tds.map{|td| td.text.strip}
-          results[code] = PriceData.new(Date.today(), row[4], row[5], row[6], row[0], row[3], row[0])
-        end
-      end
       sleep(0.5)
     end
     return results
