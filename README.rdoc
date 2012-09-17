@@ -41,6 +41,12 @@ dependencies: nokogiri
  JpStock.tdnet(:code=>'4689')
  JpStock.tdnet(:code=>'4689', :date=>'2012/3/20')
 
+証券コードからEDINETコードを取得
+ JpStock.sec2edi(:code=>'4689')
+
+EDINETコードから証券コードを取得
+ JpStock.edi2sec(:code=>'E05000')
+
 == Copyright
 
 Copyright (c) 2012 utahta. See LICENSE.txt for
