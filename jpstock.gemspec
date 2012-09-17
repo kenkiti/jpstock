@@ -29,6 +29,8 @@ Gem::Specification.new do |s|
     "lib/jpstock.rb",
     "lib/jpstock/base.rb",
     "lib/jpstock/brand.rb",
+    "lib/jpstock/edinet.csv",
+    "lib/jpstock/edinet.rb",
     "lib/jpstock/historicalprices.rb",
     "lib/jpstock/nipd.rb",
     "lib/jpstock/price.rb",
