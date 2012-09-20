@@ -24,6 +24,7 @@ dependencies: nokogiri
 銘柄情報を取得
  JpStock.brand(:category=>"0050")
  JpStock.brand(:all=>true)
+ JpStock.brand(:update=>true)
 
 個別銘柄情報を取得
  JpStock.quote(:code=>"4689")
