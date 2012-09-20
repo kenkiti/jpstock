@@ -51,9 +51,17 @@ module JpStock
   end
   
   # 銘柄情報を取得
+  # :category
+  # :all
+  # :update
   def brand(options)
     if options.nil? or !options.is_a?(Hash)
       raise BrandException, "オプションがnil、もしくはハッシュじゃないです"
+    end
+    brand_csv = File.join(File.dirname(__FILE__), 'brand.csv')
+    if options[:update]
+      # ブランド情報を更新
+      brand_update(brand_csv)
     end
     if options[:all]
       categories = Brand::CATEGORIES.keys
@@ -73,8 +81,34 @@ module JpStock
         categories = [options[:category]]
       end
     end
+
+    # ファイルチェック
+    unless File.exist?(brand_csv)
+      # ブランド情報を更新
+      brand_update(brand_csv)
+    end
     
-    results = {} # カテゴリをキーにしたハッシュをつくる
+    # カテゴリをキーにしたハッシュをつくる
+    data = {}
+    CSV.open(brand_csv, 'r') do |csv|
+      csv.each do |row|
+        cat = row[0]
+        data[cat] = [] if data[cat].nil?
+        data[cat].push(BrandData.new(row[1], row[2], row[3], row[4]))
+      end
+    end
+    
+    results = {}
+    categories.each do |category|
+      results[category] = data[category]
+    end
+    return results
+  end
+
+  # 銘柄情報を更新
+  def brand_update(brand_csv)
+    results = {}
+    categories = Brand::CATEGORIES.keys
     categories.each do |category|
       results[category] = []
       30.times do |page|
@@ -101,8 +135,17 @@ module JpStock
         sleep(0.5)
       end
     end
-    return results
+    
+    CSV.open(brand_csv, 'w') do |csv|
+      results.keys.each do |cat|
+        results[cat].each do |row|
+          next if [" ", "JASDAQ"].include?(row.market)
+          csv << [cat, row.code, row.company_name, row.market, row.info]
+        end
+      end
+    end
+    results
   end
   
-  module_function :brand
+  module_function :brand, :brand_update
 end

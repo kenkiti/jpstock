@@ -1,6 +1,5 @@
 # coding: utf-8
 # EDINET
-require 'csv'
 
 module JpStock
   class EdinetException < StandardError

@@ -3,6 +3,7 @@ $:.unshift(File.dirname(__FILE__)) unless $:.include?(File.dirname(__FILE__)) ||
 require 'open-uri'
 require 'nokogiri'
 require 'date'
+require 'csv'
 require 'jpstock/base'
 require 'jpstock/price'
 require 'jpstock/historicalprices'
