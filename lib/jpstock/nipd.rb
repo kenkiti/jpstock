@@ -22,13 +22,13 @@ module JpStock
   # :date 日付
   # :reload データ再取得(true or false)
   # :jsf 日証金取得ふらぐ(true or false)
-  # :tsf 大証金取得ふらぐ(true or false)
-  def nipd(options={:all=>true, :jsf=>true, :tsf=>true})
+  # :osf 大証金取得ふらぐ(true or false)
+  def nipd(options={:all=>true, :jsf=>true, :osf=>true})
     if options.nil? or !options.is_a?(Hash)
       raise NipdException, "オプションがnil、もしくはハッシュじゃないです"
     end
     options[:jsf] = true if options[:jsf].nil?
-    options[:tsf] = true if options[:tsf].nil?
+    options[:osf] = true if options[:osf].nil?
     if options[:code].nil?
       options[:all] = true
     else
@@ -79,7 +79,7 @@ module JpStock
     data = {}
     # 日証金から品貸料データを取得
     if options[:jsf]
-      jsf_file = Dir.tmpdir + "/jsf#{year}#{month}#{day}.csv"
+      jsf_file = File.join(Dir.tmpdir, "/jsf#{year}#{month}#{day}.csv")
       if !File.exist?(jsf_file) or reload
         begin
           url = "http://www.jsf.co.jp/de/stock/dlcsv.php?target=pcsl&date=#{year}-#{month}-#{day}"
@@ -111,13 +111,13 @@ module JpStock
     end
       
     # 大証金から品貸料データを取得
-    if options[:tsf]
-      tsf_file = Dir.tmpdir + "/tsf#{year}#{month}#{day}.csv"
-      if !File.exist?(tsf_file) or reload
+    if options[:osf]
+      osf_file = File.join(Dir.tmpdir, "/osf#{year}#{month}#{day}.csv")
+      if !File.exist?(osf_file) or reload
         begin
           url = "http://www.osf.co.jp/debt-credit/pdf/ma715500#{year}#{month}#{day}.csv"
           open(url, "r:binary") do |doc|
-            open(tsf_file, 'w') do |fp|
+            open(osf_file, 'w') do |fp|
               fp.print doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
             end
           end
@@ -126,8 +126,8 @@ module JpStock
         end
       end
       
-      if File.exist?(tsf_file)
-        CSV.open(tsf_file, 'r') do |csv|
+      if File.exist?(osf_file)
+        CSV.open(osf_file, 'r') do |csv|
           3.times do |i|
             csv.shift
           end
