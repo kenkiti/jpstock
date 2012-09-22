@@ -23,7 +23,7 @@ dependencies: nokogiri
 
 銘柄情報を取得
  JpStock.brand(:category=>"0050")
- JpStock.brand(:all=>true)
+ JpStock.brand(:code=>'4689')
  JpStock.brand(:update=>true)
 
 個別銘柄情報を取得
@@ -35,6 +35,13 @@ dependencies: nokogiri
  JpStock.nipd(:code=>"4689", :date=>'2012/3/20')
  JpStock.nipd(:code=>"4689", :date=>'2012/3/20', :reload=>true)
  JpStock.nipd(:code=>"4689", :date=>'2012/3/20', :jsf=>true, :osf=>false)
+
+信用情報を取得
+ JpStock.credit()
+ JpStock.credit(:code=>"4689")
+ JpStock.credit(:code=>"4689", :date=>'2012/9/22')
+ JpStock.credit(:code=>"4689", :date=>'2012/9/22', :reload=>true)
+ JpStock.credit(:code=>"4689", :date=>'2012/9/22', :jsf=>true, :osf=>false)
 
 適時開示情報を取得
  JpStock.tdnet()

@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = "jpstock"
-  s.version = "0.5.2"
+  s.version = "0.6.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["utahta"]
@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
     "lib/jpstock/base.rb",
     "lib/jpstock/brand.csv",
     "lib/jpstock/brand.rb",
+    "lib/jpstock/credit.rb",
     "lib/jpstock/edinet.csv",
     "lib/jpstock/edinet.rb",
     "lib/jpstock/historicalprices.rb",
