@@ -1,32 +1,42 @@
 # coding: utf-8
-# 逆日歩: Negative interest per diem
+# 信用情報: Credit
 require 'csv'
 require 'tmpdir'
 
 module JpStock
-  class NipdException < StandardError
+  class CreditException < StandardError
   end
   
-  class NipdData
-    attr_accessor :code, :company_name, :price, :days
-    def initialize(code, company_name, price, days, security)
+  # 信用情報データ
+  class CreditData
+    attr_accessor :code, :loan_new, :loan_return, :loan_balance,
+                  :stock_new, :stock_return, :stock_balance,
+                  :balance, :balance_prev, :security
+    def initialize(code, loan_new, loan_return, loan_balance, 
+                   stock_new, stock_return, stock_balance,
+                   balance, balance_prev, security)
       @code = code # 証券コード
-      @company_name = company_name # 会社名
-      @price = price.to_f # 品貸料率（円）
-      @days = days.to_i # 品貸日数
-      @security = security
+      @loan_new = loan_new.to_i # 融資新規
+      @loan_return = loan_return.to_i # 融資返済
+      @loan_balance = loan_balance.to_i # 融資残高
+      @stock_new = stock_new.to_i # 貸株新規
+      @stock_return = stock_return.to_i # 貸株返済
+      @stock_balance = stock_balance.to_i # 貸株残高
+      @balance = balance.to_i # 差引残高
+      @balance_prev = balance_prev.to_i # 差引前日比
+      @security = security # 証金
     end
   end
   
-  # 逆日歩情報を取得
+  # 信用情報を取得
   # :code 証券コード
   # :date 日付
   # :reload データ再取得(true or false)
   # :jsf 日証金取得ふらぐ(true or false)
   # :osf 大証金取得ふらぐ(true or false)
-  def nipd(options={:all=>true, :jsf=>true, :osf=>true})
+  def credit(options={:jsf=>true, :osf=>true})
     if options.nil? or !options.is_a?(Hash)
-      raise NipdException, "オプションがnil、もしくはハッシュじゃないです"
+      raise CreditException, "オプションがnil、もしくはハッシュじゃないです"
     end
     options[:jsf] = true if options[:jsf].nil?
     options[:osf] = true if options[:osf].nil?
@@ -41,7 +51,7 @@ module JpStock
       options[:code].map!{|code| code.to_s} # 文字列に変換
       options[:code].each do |code|
         if (/^\d{4}$/ =~ code).nil?
-          raise NipdException, "指定された:codeの一部が不正です"
+          raise CreditException, "指定された:codeの一部が不正です"
         end
       end
     end
@@ -57,7 +67,7 @@ module JpStock
       begin
         options[:date] = Date.strptime(options[:date], '%Y/%m/%d')
       rescue
-        raise NipdException, ":dateはDate型かyyyy/mm/ddフォーマットの文字列じゃないとだめです"
+        raise CreditException, ":dateはDate型かyyyy/mm/ddフォーマットの文字列じゃないとだめです"
       end
     end
     if options[:reload] != true
@@ -81,32 +91,32 @@ module JpStock
     # 日証金から品貸料データを取得
     jsf = {}
     if options[:jsf]
-      jsf_file = File.join(Dir.tmpdir, "/jsf#{year}#{month}#{day}.csv")
+      jsf_file = File.join(Dir.tmpdir, "/jsfb#{year}#{month}#{day}.csv")
       if !File.exist?(jsf_file) or reload
         begin
-          url = "http://www.jsf.co.jp/de/stock/dlcsv.php?target=pcsl&date=#{year}-#{month}-#{day}"
+          url = "http://www.jsf.co.jp/de/stock/dlcsv.php?target=balance&date=#{year}-#{month}-#{day}"
           open(url, "r:binary") do |doc|
             doc = doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
-            raise if /指定された日付の品貸料率一覧表はありません/ =~ doc
+            raise if /指定された日付の融資・貸株残高一覧表はありません/ =~ doc
             open(jsf_file, 'w') do |fp|
               fp.print doc
             end
           end
         rescue
-          print "日証金データが見つからないです (#{url})\n"
+          puts "日証金データが見つからないです (#{url})"
         end
       end
       
       if File.exist?(jsf_file)
         CSV.open(jsf_file, 'r') do |csv|
-          5.times do |i|
+          5.times do
             csv.shift
           end
           csv.each do |row|
-            row = row.map{|r| r.gsub(/(^(\s|　)+)|((\s|　)+$)/, '') if r.is_a?(String)} # 全角スペース対応
-            next if row[8] == "*****" # 満額だったら飛ばす
             code = row[2]
-            jsf[code] = NipdData.new(code, row[3], row[8], row[9], 'jsf')
+            jsf[code] = CreditData.new(code, row[5], row[6], row[7], 
+                                       row[8], row[9], row[10],
+                                       row[11], row[12], 'jsf')
           end
         end
       end
@@ -115,29 +125,30 @@ module JpStock
     # 大証金から品貸料データを取得
     osf = {}
     if options[:osf]
-      osf_file = File.join(Dir.tmpdir, "/osf#{year}#{month}#{day}.csv")
+      osf_file = File.join(Dir.tmpdir, "/osfb#{year}#{month}#{day}.csv")
       if !File.exist?(osf_file) or reload
         begin
-          url = "http://www.osf.co.jp/debt-credit/pdf/ma715500#{year}#{month}#{day}.csv"
+          url = "http://www.osf.co.jp/debt-credit/pdf/ma713500#{year}#{month}#{day}.csv"
           open(url, "r:binary") do |doc|
             open(osf_file, 'w') do |fp|
               fp.print doc.read.encode('utf-8', 'cp932', :invalid => :replace, :undef => :replace)
             end
           end
         rescue
-          print "大証金データが見つからないです (#{url})\n"
+          puts "大証金データが見つからないです (#{url})"
         end
       end
       
       if File.exist?(osf_file)
         CSV.open(osf_file, 'r') do |csv|
-          3.times do |i|
+          3.times do
             csv.shift
           end
           csv.each do |row|
-            row = row.map{|r| r.gsub(/(^(\s|　)+)|((\s|　)+$)/, '') if r.is_a?(String)}
-            code = row[2]
-            osf[code] = NipdData.new(code, row[3], row[6], row[5], 'osf')
+            code = row[3]
+            osf[code] = CreditData.new(code, row[6], row[7], row[8], 
+                                       row[10], row[11], row[12],
+                                       row[13], row[14], 'osf')
           end
         end
       end
@@ -167,6 +178,6 @@ module JpStock
     end
     return results
   end
-    
-  module_function :nipd
+  
+  module_function :credit
 end

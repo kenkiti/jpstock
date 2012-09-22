@@ -23,11 +23,12 @@ module JpStock
     if options[:code].nil?
       raise HistoricalPricesException, ":codeが指定されてないです"
     end
+    options[:return_array] = true
     if !options[:code].is_a?(Array)
+      options[:return_array] = false
       options[:code] = [options[:code]]
     end
     options[:code].map!{|code| code.to_s} # 文字列に変換
-    options[:code].uniq!
     options[:code].each do |code|
       if (/^\d{4}$/ =~ code).nil?
         raise HistoricalPricesException, "指定された:codeの一部が不正です"
@@ -76,9 +77,9 @@ module JpStock
     emon = end_date.month
     eday = end_date.day
     
-    results = {}
+    results = []
     codes.each do |code|
-      results[code] = []
+      data = []
       500.times do |page|
         page *= 50 # 50ずつ増えてく
         site_url = "http://table.yahoo.co.jp/t?c=#{syear}&a=#{smon}&b=#{sday}&f=#{eyear}&d=#{emon}&e=#{eday}&g=#{range_type}&s=#{code}&y=#{page}&z=#{code}.t&x=.csv"
@@ -95,14 +96,16 @@ module JpStock
           if tds.length == data_field_num
             row = tds.map{|td| td.text.strip}
             begin
-              results[code].push(PriceData.new(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+              data.push(PriceData.new(code, row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
             rescue
             end
           end
         end
         sleep(0.5)
       end
+      results.push(data)
     end
+    results = results[0] unless options[:return_array]
     return results
   end
   

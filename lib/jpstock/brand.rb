@@ -5,12 +5,13 @@ module JpStock
   end
 
   class BrandData
-    attr_accessor :code, :market, :company_name, :info
-    def initialize(code, market, company_name, info)
+    attr_accessor :code, :market, :company_name, :info, :category
+    def initialize(code, market, company_name, info, category)
       @code = code # 証券コード
       @market = market # 市場
       @company_name = company_name # 会社名
       @info = info # 銘柄情報
+      @category = category # 業種ID
     end
   end
   
@@ -51,10 +52,10 @@ module JpStock
   end
   
   # 銘柄情報を取得
+  # :code
   # :category
-  # :all
   # :update
-  def brand(options)
+  def brand(options={})
     if options.nil? or !options.is_a?(Hash)
       raise BrandException, "オプションがnil、もしくはハッシュじゃないです"
     end
@@ -63,12 +64,20 @@ module JpStock
       # ブランド情報を更新
       brand_update(brand_csv)
     end
-    if options[:all]
-      categories = Brand::CATEGORIES.keys
-    else
-      if options[:category].nil?
-        raise BrandException, "カテゴリが指定されてません"
+    if options[:code]
+      options[:return_array] = true
+      if !options[:code].is_a?(Array)
+        options[:return_array] = false
+        options[:code] = [options[:code]]
       end
+      options[:code].map!{|code| code.to_s} # 文字列に変換
+      options[:code].each do |code|
+        if (/^\d{4}$/ =~ code).nil?
+          raise BrandException, "指定された:codeの一部が不正です"
+        end
+      end
+    end
+    if options[:category]
       if options[:category].is_a?(Array)
         categories = Brand::CATEGORIES.keys & options[:category] # 正解のカテゴリだけ抽出
         if categories.empty?
@@ -80,71 +89,73 @@ module JpStock
         end
         categories = [options[:category]]
       end
+    else
+      categories = Brand::CATEGORIES.keys
     end
-
+    codes = options[:code]
+    
     # ファイルチェック
     unless File.exist?(brand_csv)
       # ブランド情報を更新
       brand_update(brand_csv)
     end
     
-    # カテゴリをキーにしたハッシュをつくる
+    # 証券コードをキーにしたハッシュをつくる
     data = {}
     CSV.open(brand_csv, 'r') do |csv|
       csv.each do |row|
-        cat = row[0]
-        data[cat] = [] if data[cat].nil?
-        data[cat].push(BrandData.new(row[1], row[2], row[3], row[4]))
+        category = row[0]
+        next unless categories.include?(category)
+        data[row[1]] = BrandData.new(row[1], row[2], row[3], row[4], category)
       end
     end
-    
-    results = {}
-    categories.each do |category|
-      results[category] = data[category]
+    # 結果を返す
+    results = []
+    if codes
+      codes.each do |code|
+        results.push(data[code])
+      end
+      results = results[0] unless options[:return_array]
+    else
+      results = data.values
     end
     return results
   end
-
+  
   # 銘柄情報を更新
   def brand_update(brand_csv)
+    puts "銘柄情報を取得します..."
     results = {}
     categories = Brand::CATEGORIES.keys
-    categories.each do |category|
-      results[category] = []
-      30.times do |page|
-        page += 1 # 1～の指定
-        site_url = "http://stocks.finance.yahoo.co.jp/stocks/qi/?ids=#{category}&p=#{page}"
-        html = open(site_url).read
-        doc = Nokogiri::HTML(html)
-        trs = doc.xpath('//tr[@class="yjM"]')
-        if trs.empty?
-          break
-        end
-        
-        data_field_num = 5
-        trs.each do |tr|
-          tds = tr.xpath('.//td')
-          row = [
-            tds[0].content.strip,
-            tds[1].content.strip,
-            tds[2].xpath('./strong').text.strip,
-            tds[2].xpath('./span').text.strip
-           ]
-          results[category].push(BrandData.new(row[0], row[1], row[2], row[3]))
-        end
-        sleep(0.5)
-      end
-    end
-    
     CSV.open(brand_csv, 'w') do |csv|
-      results.keys.each do |cat|
-        results[cat].each do |row|
-          next if [" ", "JASDAQ"].include?(row.market)
-          csv << [cat, row.code, row.company_name, row.market, row.info]
+      categories.each do |category|
+        results[category] = []
+        30.times do |page|
+          page += 1 # 1～の指定
+          site_url = "http://stocks.finance.yahoo.co.jp/stocks/qi/?ids=#{category}&p=#{page}"
+          html = open(site_url).read
+          doc = Nokogiri::HTML(html)
+          trs = doc.xpath('//tr[@class="yjM"]')
+          if trs.empty?
+            break
+          end
+          
+          data_field_num = 5
+          trs.each do |tr|
+            tds = tr.xpath('.//td')
+            row = [
+              tds[0].content.strip,
+              tds[1].content.strip,
+              tds[2].xpath('./strong').text.strip,
+              tds[2].xpath('./span').text.strip
+            ]
+            next if [" ", "JASDAQ"].include?(row[1])
+            csv << [category, row[0], row[1], row[2], row[3]]
+          end
+          sleep(0.5)
         end
       end
     end
-    results
   end
   
   module_function :brand, :brand_update

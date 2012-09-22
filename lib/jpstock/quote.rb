@@ -5,13 +5,14 @@ module JpStock
   end
   
   class QuoteData
-    attr_accessor :company_name, :close, :prev_close, :open, :high, :low, :volume,
+    attr_accessor :code, :company_name, :close, :prev_close, :open, :high, :low, :volume,
       :market_cap, :shares_issued, :dividend_yield, :dividend_one, 
       :per, :pbr, :eps, :bps, :price_min, :round_lot, :years_high, :years_low
     
-    def initialize(company_name, close, prev_close, open, high, low, volume,
+    def initialize(code, company_name, close, prev_close, open, high, low, volume,
                   market_cap, shares_issued, dividend_yield, dividend_one, 
                   per, pbr, eps, bps, price_min, round_lot, years_high, years_low)
+      @code = code # 証券コード
       @company_name = company_name # 会社名
       @close = to_int(close) # 現在終値
       @prev_close = to_int(prev_close) # 前日終値
@@ -62,11 +63,12 @@ module JpStock
     if options[:code].nil?
       raise QuoteException, ":codeが指定されてないです"
     end
+    options[:return_array] = true
     if !options[:code].is_a?(Array)
+      options[:return_array] = false
       options[:code] = [options[:code]]
     end
     options[:code].map!{|code| code.to_s} # 文字列に変換
-    options[:code].uniq!
     options[:code].each do |code|
       if (/^\d{4}$/ =~ code).nil?
         raise QuoteException, "指定された:codeの一部が不正です"
@@ -74,7 +76,7 @@ module JpStock
     end
     codes = options[:code]
     
-    results = {} # 証券コードをキーにしたハッシュを返す
+    results = []
     codes.each do |code|
       site_url = "http://stocks.finance.yahoo.co.jp/stocks/detail/?code=#{code}"
       html = open(site_url).read
@@ -100,12 +102,13 @@ module JpStock
       data_field_num = 12
       if elms.length == data_field_num
         row = elms.map{|elm| elm.xpath('.//dd/strong').text }
-        results[code] = QuoteData.new(company_name, close, prev_close, open, high, low, volume,
-                                        row[0], row[1], row[2], row[3], row[4], row[5],
-                                        row[6], row[7], row[8], row[9], row[10], row[11])
+        results.push(QuoteData.new(code, company_name, close, prev_close, open, high, low, volume,
+                                   row[0], row[1], row[2], row[3], row[4], row[5],
+                                   row[6], row[7], row[8], row[9], row[10], row[11]))
       end
       sleep(0.5)
     end
+    results = results[0] unless options[:return_array]
     return results
   end
   
