@@ -81,11 +81,16 @@ module JpStock
     codes.each do |code|
       data = []
       500.times do |page|
-        page *= 50 # 50ずつ増えてく
-        site_url = "http://table.yahoo.co.jp/t?c=#{syear}&a=#{smon}&b=#{sday}&f=#{eyear}&d=#{emon}&e=#{eday}&g=#{range_type}&s=#{code}&y=#{page}&z=#{code}.t&x=.csv"
-        html = open(site_url, "r:binary").read.encode('utf-8', 'euc-jp', :invalid => :replace, :undef => :replace)
+        page += 1
+        site_url = "http://info.finance.yahoo.co.jp/history/?code=#{code}&sy=#{syear}&sm=#{smon}&sd=#{sday}&ey=#{eyear}&em=#{emon}&ed=#{eday}&tm=#{range_type}&p=#{page}"
+        html = open(site_url).read
         doc = Nokogiri::HTML(html)
-        trs = doc.xpath('//tr[@align="right" and @bgcolor="#ffffff"]')
+        table = doc.xpath('//table[@class="boardFin yjSt marB6"]')
+        if table.empty?
+          break
+        end
+        trs = table.xpath('.//tr')
+        trs.shift
         if trs.empty?
           break
         end
