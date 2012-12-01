@@ -70,7 +70,7 @@ describe JpStock, "過去の株価を取得する場合" do
     o.volume.should == 123630
   end
 
-  it "2012/1/1から11/30までの株価データ取得件数が一致すること" do
+  it "2012/1/1から3/31までの株価データ取得件数が一致すること" do
     o = JpStock.historical_prices(:code=>"4689", :start_date=>'2012/1/1', :end_date=>'2012/3/31')
     o.length.should == 61
   end
