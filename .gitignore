@@ -51,3 +51,4 @@ pkg
 rspec
 .buildpath
 .project
+bundler
