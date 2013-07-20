@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "jpstock"
-  s.version = "0.6.1"
+  s.version = "0.6.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["utahta"]
-  s.date = "2012-12-01"
+  s.date = "2013-07-20"
   s.description = "JpStock is a Ruby library for extracting information about Japan stocks"
   s.email = "labs.ninxit@gmail.com"
   s.extra_rdoc_files = [
@@ -44,7 +44,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/utahta/jpstock"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.10"
+  s.rubygems_version = "1.8.23"
   s.summary = "JpStock is a Ruby library for extracting information about Japan stocks"
 
   if s.respond_to? :specification_version then
