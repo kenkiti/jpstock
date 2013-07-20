@@ -89,7 +89,8 @@ module JpStock
             code = row[1][0..3] # コード
             name = row[2] # 会社名
             title = row[3] # 表題
-            url = "#{root_url}/" + tds[3].xpath('.//a')[0][:href] # 開示リンク先
+            url = tds[3].xpath('.//a') # 開示リンク先
+            url = url.empty? ? "#" :  "#{root_url}/"+url[0][:href]
             gyouhai = !row[4].empty? # 業績・配当
             exchange = row[6] # 取引所
             
