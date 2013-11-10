@@ -1,24 +1,22 @@
 # coding: utf-8
-# 非推奨 いずれ消えます
-# 代替: sector.rb
 
 module JpStock
-  class BrandException < StandardError
+  class SectorException < StandardError
   end
 
-  class BrandData
-    attr_accessor :code, :market, :company_name, :info, :category
-    def initialize(code, market, company_name, info, category)
+  class SectorData
+    attr_accessor :code, :market, :company_name, :info, :id
+    def initialize(code, market, company_name, info, id)
       @code = code # 証券コード
       @market = market # 市場
       @company_name = company_name # 会社名
       @info = info # 銘柄情報
-      @category = category # 業種ID
+      @id = id # 業種ID
     end
   end
   
-  class Brand
-    CATEGORIES = {'0050' => '農林・水産業',
+  class Sector
+    IDS = {'0050' => '農林・水産業',
            '1050' => '鉱業',
            '2050' => '建設業',
            '3050' => '食料品',
@@ -55,16 +53,16 @@ module JpStock
   
   # 銘柄情報を取得
   # :code
-  # :category
+  # :id
   # :update
-  def brand(options={})
+  def sector(options={})
     if options.nil? or !options.is_a?(Hash)
-      raise BrandException, "オプションがnil、もしくはハッシュじゃないです"
+      raise SectorException, "オプションがnil、もしくはハッシュじゃないです"
     end
-    brand_csv = File.join(File.dirname(__FILE__), 'brand.csv')
+    brand_csv = File.join(File.dirname(__FILE__), 'sector.csv')
     if options[:update]
       # ブランド情報を更新
-      brand_update(brand_csv)
+      sector_update(brand_csv)
     end
     if options[:code]
       options[:return_array] = true
@@ -75,40 +73,40 @@ module JpStock
       options[:code].map!{|code| code.to_s} # 文字列に変換
       options[:code].each do |code|
         if (/^\d{4}$/ =~ code).nil?
-          raise BrandException, "指定された:codeの一部が不正です"
+          raise SectorException, "指定された:codeの一部が不正です"
         end
       end
     end
-    if options[:category]
-      if options[:category].is_a?(Array)
-        categories = Brand::CATEGORIES.keys & options[:category] # 正解のカテゴリだけ抽出
-        if categories.empty?
-          raise BrandException, "指定されたカテゴリが見つかりません"
+    if options[:id]
+      if options[:id].is_a?(Array)
+        ids = Sector::IDS.keys & options[:id] # 正解のカテゴリだけ抽出
+        if ids.empty?
+          raise SectorException, "指定されたカテゴリが見つかりません"
         end
       else
-        if Brand::CATEGORIES[options[:category]].nil?
-          raise BrandException, "指定されたカテゴリが見つかりません"
+        if Sector::IDS[options[:id]].nil?
+          raise SectorException, "指定されたカテゴリが見つかりません"
         end
-        categories = [options[:category]]
+        ids = [options[:id]]
       end
     else
-      categories = Brand::CATEGORIES.keys
+      ids = Sector::IDS.keys
     end
     codes = options[:code]
     
     # ファイルチェック
     unless File.exist?(brand_csv)
       # ブランド情報を更新
-      brand_update(brand_csv)
+      sector_update(brand_csv)
     end
     
     # 証券コードをキーにしたハッシュをつくる
     data = {}
     CSV.open(brand_csv, 'r') do |csv|
       csv.each do |row|
-        category = row[0]
-        next unless categories.include?(category)
-        data[row[1]] = BrandData.new(row[1], row[2], row[3], row[4], category)
+        id = row[0]
+        next unless ids.include?(id)
+        data[row[1]] = SectorData.new(row[1], row[2], row[3], row[4], id)
       end
     end
     # 結果を返す
@@ -125,16 +123,16 @@ module JpStock
   end
   
   # 銘柄情報を更新
-  def brand_update(brand_csv)
+  def sector_update(brand_csv)
     puts "銘柄情報を取得します..."
     results = {}
-    categories = Brand::CATEGORIES.keys
+    ids = Sector::IDS.keys
     CSV.open(brand_csv, 'w') do |csv|
-      categories.each do |category|
-        results[category] = []
+      ids.each do |id|
+        results[id] = []
         30.times do |page|
           page += 1 # 1～の指定
-          site_url = "http://stocks.finance.yahoo.co.jp/stocks/qi/?ids=#{category}&p=#{page}"
+          site_url = "http://stocks.finance.yahoo.co.jp/stocks/qi/?ids=#{id}&p=#{page}"
           html = open(site_url).read
           doc = Nokogiri::HTML(html)
           trs = doc.xpath('//tr[@class="yjM"]')
@@ -152,7 +150,7 @@ module JpStock
               tds[2].xpath('./span').text.strip
             ]
             next if [" ", "JASDAQ"].include?(row[1])
-            csv << [category, row[0], row[1], row[2], row[3]]
+            csv << [id, row[0], row[1], row[2], row[3]]
           end
           sleep(0.5)
         end
@@ -160,5 +158,5 @@ module JpStock
     end
   end
   
-  module_function :brand, :brand_update
+  module_function :sector, :sector_update
 end

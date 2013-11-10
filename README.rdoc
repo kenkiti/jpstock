@@ -21,10 +21,10 @@ dependencies: nokogiri
  JpStock.historical_prices(:code=>"4689", :start_date=>Date.new(2012,1,1), :end_date=>Date.today)
  JpStock.historical_prices(:code=>"4689", :all=>true)
 
-銘柄情報を取得
- JpStock.brand(:category=>"0050")
- JpStock.brand(:code=>'4689')
- JpStock.brand(:update=>true)
+セクター別銘柄情報を取得
+ JpStock.sector(:id=>"0050")
+ JpStock.sector(:code=>'4689')
+ JpStock.sector(:update=>true)
 
 個別銘柄情報を取得
  JpStock.quote(:code=>"4689")

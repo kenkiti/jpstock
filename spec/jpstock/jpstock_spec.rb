@@ -63,11 +63,11 @@ describe JpStock, "過去の株価を取得する場合" do
     o = o[0]
     o.code.should == 4689
     o.date.should == Date.new(2012, 11, 30)
-    o.open.should == 28150
-    o.close.should == 27680
-    o.high.should == 28170
-    o.low.should == 27680
-    o.volume.should == 123630
+    o.open.should == 281
+    o.close.should == 276
+    o.high.should == 281
+    o.low.should == 276
+    o.volume.should == 12363000
   end
 
   it "2012/1/1から3/31までの株価データ取得件数が一致すること" do
@@ -77,6 +77,7 @@ describe JpStock, "過去の株価を取得する場合" do
   
 end
 
+# 非推奨 -------
 describe "銘柄情報を取得する場合" do
   
   it "オプションがnilだったら例外を投げるべき" do
@@ -89,6 +90,22 @@ describe "銘柄情報を取得する場合" do
   end
   
 end
+#-------------------
+
+describe "セクター情報を取得する場合" do
+  
+  it "オプションがnilだったら例外を投げるべき" do
+    expect{ JpStock.sector(nil) }.to raise_error(JpStock::SectorException)
+  end
+
+  it "指定されたIDがおかしかったら例外を投げるべき" do
+    expect{ JpStock.sector(:id => "abc") }.to raise_error(JpStock::SectorException)
+    expect{ JpStock.sector(:id => ["abc", "def"]) }.to raise_error(JpStock::SectorException)
+  end
+  
+end
+
+
 
 describe "個別銘柄情報を取得する場合" do
   
