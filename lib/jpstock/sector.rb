@@ -59,10 +59,10 @@ module JpStock
     if options.nil? or !options.is_a?(Hash)
       raise SectorException, "オプションがnil、もしくはハッシュじゃないです"
     end
-    brand_csv = File.join(File.dirname(__FILE__), 'sector.csv')
+    sector_csv = File.join(File.dirname(__FILE__), 'sector.csv')
     if options[:update]
       # ブランド情報を更新
-      sector_update(brand_csv)
+      sector_update(sector_csv)
     end
     if options[:code]
       options[:return_array] = true
@@ -95,14 +95,14 @@ module JpStock
     codes = options[:code]
     
     # ファイルチェック
-    unless File.exist?(brand_csv)
+    unless File.exist?(sector_csv)
       # ブランド情報を更新
-      sector_update(brand_csv)
+      sector_update(sector_csv)
     end
     
     # 証券コードをキーにしたハッシュをつくる
     data = {}
-    CSV.open(brand_csv, 'r') do |csv|
+    CSV.open(sector_csv, 'r') do |csv|
       csv.each do |row|
         id = row[0]
         next unless ids.include?(id)
@@ -123,11 +123,11 @@ module JpStock
   end
   
   # 銘柄情報を更新
-  def sector_update(brand_csv)
+  def sector_update(sector_csv)
     puts "銘柄情報を取得します..."
     results = {}
     ids = Sector::IDS.keys
-    CSV.open(brand_csv, 'w') do |csv|
+    CSV.open(sector_csv, 'w') do |csv|
       ids.each do |id|
         results[id] = []
         30.times do |page|
