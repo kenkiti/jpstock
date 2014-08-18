@@ -7,14 +7,14 @@ module JpStock
     attr_accessor :code, :date, :open, :high, :low, :close, :volume
     
     def initialize(code, date, open, high, low, close, volume, adj_close)
-      @code = to_int(code)
+      @code = code
       @date = to_date(date)
-      @open = to_int(open)
-      @high = to_int(high)
-      @low = to_int(low)
-      @close = to_int(close)
-      @volume = to_int(volume)
-      adjust(to_int(adj_close))
+      @open = to_float(open)
+      @high = to_float(high)
+      @low = to_float(low)
+      @close = to_float(close)
+      @volume = to_float(volume)
+      adjust(to_float(adj_close))
     end
     
     private 
@@ -40,11 +40,11 @@ module JpStock
       end
     end
     
-    def to_int(val)
+    def to_float(val)
       if val.instance_of?(String)
         val.gsub!(',', '')
       end
-      return val.to_i
+      val.to_f
     end
     
   end

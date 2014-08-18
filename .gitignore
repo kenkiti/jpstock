@@ -52,3 +52,6 @@ rspec
 .buildpath
 .project
 bundler
+.DS_Store
+*.iml
+.idea
