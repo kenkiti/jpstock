@@ -28,7 +28,7 @@ module JpStock
     if options[:code].nil?
       options[:all] = true
     else
-      if !options[:code].is_a?(Array)
+      unless options[:code].is_a?(Array)
         options[:code] = [options[:code]]
       end
       options[:code].map!{|code| code.to_s} # 文字列に変換
@@ -42,19 +42,19 @@ module JpStock
     if options[:date].nil?
       options[:date] = Date.today
     end
-    if !options[:date].is_a?(Date)
+    unless options[:date].is_a?(Date)
       begin
         options[:date] = Date.strptime(options[:date], '%Y/%m/%d')
       rescue
         raise TdnetException, ":dateはDate型かyyyy/mm/ddフォーマットの文字列じゃないとだめです"
       end
     end
-    
+
     # 証券コード
     codes = options[:code]
     
     # 全取得
-    all = options[:all] == true
+    all = options[:all]
       
     # 取得日時
     year = options[:date].year
@@ -64,7 +64,6 @@ module JpStock
     # 取得先URL
     root_url = "https://www.release.tdnet.info/inbs"
     
-    results = []
     100.times do |i|
       num = "%03d" % (i+1)
       pageurl = "#{root_url}/I_list_#{num}_#{year}#{month}#{day}.html"
@@ -78,10 +77,9 @@ module JpStock
       doc = Nokogiri::HTML(html)
       
       # 情報取得
-      tables = doc.xpath('//table[@cellspacing="0"]')
+      tables = doc.xpath('//table[@id="main-list-table"]')
       trs = tables[0].xpath('.//tr')
-      trs.shift
-  
+
       trs.each do |tr|
         tds = tr.xpath('.//td')
         row = tds.map{|td| td.content.strip}
@@ -91,11 +89,11 @@ module JpStock
         name = row[2] # 会社名
         title = row[3] # 表題
         url = tds[3].xpath('.//a') # 開示リンク先
-        url = url.empty? ? "" :  "#{root_url}/"+url[0][:href]
-        gyouhai = !row[4].empty? # 業績・配当
-        xbrl = tds[5].xpath('.//a') # XBRLリンク先
+        url = url.empty? ? '' :  "#{root_url}/"+url[0][:href]
+        gyouhai = false # 業績・配当 !!deprecated!!
+        xbrl = tds[4].xpath('.//a') # XBRLリンク先
         xbrl = xbrl.empty? ? "" : "#{root_url}/"+xbrl[0][:href]
-        exchange = row[6] # 取引所
+        exchange = row[5] # 取引所
         
         if all
           yield TdnetData.new(datetime, code, name, title, url, gyouhai, exchange, xbrl)
@@ -103,17 +101,20 @@ module JpStock
           if codes.include?(code)
             yield TdnetData.new(datetime, code, name, title, url, gyouhai, exchange, xbrl)
           end
-        end 
+        end
       end
     end
   end
   
   # 適時開示情報をまとめて取得
   def tdnet(options={})
+    interval = 5
+    interval ||= options[:interval]
+
     results = []
     tdnet_each(options) do |tdnet|
       results.push(tdnet)
-      sleep(0.3)
+      sleep(interval)
     end
     results
   end
