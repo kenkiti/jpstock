@@ -14,14 +14,18 @@ describe JpStock, "株価を取得する場合" do
     expect{ JpStock.price(:code=>["1", "a"]) }.to raise_error(JpStock::PriceException)
   end
 
-  it "証券コード, 始値, 終値, 高値, 安値, 出来高は数値型であること" do
+  it "証券コードは文字列型であること" do
     o = JpStock.price(:code=>"4689")
-    (o.code.instance_of?(Fixnum) and o.code > 0).should == true
-    (o.open.instance_of?(Fixnum) and o.open > 0).should == true
-    (o.close.instance_of?(Fixnum) and o.close > 0).should == true
-    (o.high.instance_of?(Fixnum) and o.high > 0).should == true
-    (o.low.instance_of?(Fixnum) and o.low > 0).should == true
-    (o.volume.instance_of?(Fixnum) and o.volume >= 0).should == true
+    o.code.instance_of?(String).should == true
+  end
+
+  it "始値, 終値, 高値, 安値, 出来高は数値型であること" do
+    o = JpStock.price(:code=>"4689")
+    (o.open.instance_of?(Float) and o.open > 0).should == true
+    (o.close.instance_of?(Float) and o.close > 0).should == true
+    (o.high.instance_of?(Float) and o.high > 0).should == true
+    (o.low.instance_of?(Float) and o.low > 0).should == true
+    (o.volume.instance_of?(Float) and o.volume >= 0).should == true
   end
 
   it "日付は日付型であること" do
@@ -61,13 +65,13 @@ describe JpStock, "過去の株価を取得する場合" do
     o = JpStock.historical_prices(:code=>"4689", :start_date=>'2012/11/30', :end_date=>'2012/11/30')
     o.length.should == 1
     o = o[0]
-    o.code.should == 4689
+    o.code.should == '4689'
     o.date.should == Date.new(2012, 11, 30)
-    o.open.should == 281
-    o.close.should == 276
-    o.high.should == 281
-    o.low.should == 276
-    o.volume.should == 12363000
+    o.open.should == 281.5
+    o.close.should == 276.8
+    o.high.should == 281.7
+    o.low.should == 276.8
+    o.volume.should == 12363000.0
   end
 
   it "2012/1/1から3/31までの株価データ取得件数が一致すること" do
