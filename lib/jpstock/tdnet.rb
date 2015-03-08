@@ -78,6 +78,7 @@ module JpStock
       
       # 情報取得
       tables = doc.xpath('//table[@id="main-list-table"]')
+      break if tables.empty?
       trs = tables[0].xpath('.//tr')
 
       trs.each do |tr|
