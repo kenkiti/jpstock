@@ -81,21 +81,6 @@ describe JpStock, "過去の株価を取得する場合" do
   
 end
 
-# 非推奨 -------
-describe "銘柄情報を取得する場合" do
-  
-  it "オプションがnilだったら例外を投げるべき" do
-    expect{ JpStock.brand(nil) }.to raise_error(JpStock::BrandException)
-  end
-
-  it "指定されたカテゴリーがおかしかったら例外を投げるべき" do
-    expect{ JpStock.brand(:category => "abc") }.to raise_error(JpStock::BrandException)
-    expect{ JpStock.brand(:category => ["abc", "def"]) }.to raise_error(JpStock::BrandException)
-  end
-  
-end
-#-------------------
-
 describe "セクター情報を取得する場合" do
   
   it "オプションがnilだったら例外を投げるべき" do
